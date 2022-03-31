@@ -13,7 +13,7 @@ import {CommentEntity} from "./comment/entities/comment.entity";
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      port: 5433,
+      port: 5432,
       username: 'user',
       password: 'admin135',
       database: 'postgres',

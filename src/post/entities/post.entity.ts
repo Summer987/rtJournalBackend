@@ -11,6 +11,9 @@ export class PostEntity {
   @Column({ default: '' })
   body: string;
 
+  @Column({ default: 0 })
+  views: number;
+
   @Column({ default: '' })
   tags: string;
 
