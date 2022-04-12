@@ -1,10 +1,11 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
+import {ForbiddenException, Injectable, NotFoundException} from '@nestjs/common';
 import { UpdatePostDto } from './dto/update-post.dto';
 import {InjectRepository} from "@nestjs/typeorm";
 import {Repository} from "typeorm";
 import {PostEntity} from "./entities/post.entity";
 import {CreatePostDto} from "./dto/create-post.dto";
 import {SearchPostDto} from "./dto/search-post.dto";
+import {UserEntity} from "../user/entities/user.entity";
 
 @Injectable()
 export class PostService {
@@ -13,8 +14,16 @@ export class PostService {
     private repository: Repository<PostEntity>,
   ) {}
 
-  create(dto: CreatePostDto) {
-    return this.repository.save(dto);
+  create(dto: CreatePostDto, userId: number) {
+    const firstParagraph = dto.body.find(obj => obj.type === 'paragraph' )?.data.text
+
+    return this.repository.save({
+      title: dto.title,
+      body: dto.body,
+      tags: dto.tags,
+      user: { id: userId },
+      description: firstParagraph || '',
+    });
   }
 
   findAll() {
@@ -40,7 +49,9 @@ export class PostService {
   }
 
   async search(dto: SearchPostDto) {
-    const qb = this.repository.createQueryBuilder('p')
+    const qb = this.repository.createQueryBuilder('posts')
+
+    qb.leftJoinAndSelect('posts.user', 'user')
 
     qb.limit(dto.limit || 0)
     qb.take(dto.take || 10)
@@ -76,7 +87,8 @@ export class PostService {
   async findOne(id: number) {
     const qb = await this.repository.createQueryBuilder('posts')
 
-    await qb.whereInIds(id)
+    await qb
+      .whereInIds(id)
       .update()
       .set({
         'views': () => 'views + 1'
@@ -86,23 +98,34 @@ export class PostService {
     return this.repository.findOne(id);
   }
 
-  async update(id: number, dto: UpdatePostDto) {
-    const find = await this.repository.update(id, dto)
+  async update(id: number, dto: UpdatePostDto, userId: number) {
+    const find = await this.repository.findOne(+id)
 
     if (!find) {
       throw new NotFoundException('Статья не найдена')
     }
 
-    return find;
+    const firstParagraph = dto.body.find(obj => obj.type === 'paragraph' )?.data.text
+
+    return this.repository.update(id, {
+      title: dto.title,
+      body: dto.body,
+      tags: dto.tags || '',
+      user: { id: userId },
+      description: firstParagraph || '',
+    });
   }
 
-  async remove(id: number) {
+  async remove(id: number, userId: number) {
     const find = await this.repository.findOne(id)
 
     if (!find) {
       throw new NotFoundException('Статья не найдена')
     }
 
+    if (find.user.id !== userId) {
+      throw new ForbiddenException('Нет доступа к этой статье!')
+    }
     return this.repository.delete(id);
   }
 }
