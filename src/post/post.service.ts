@@ -61,15 +61,15 @@ export class PostService {
     }
 
     if (dto.body) {
-      qb.andWhere(`p.body ILIKE :body`)
+      qb.andWhere(`posts.body ILIKE :body`)
     }
 
     if (dto.title) {
-      qb.andWhere(`p.title ILIKE :title`)
+      qb.andWhere(`posts.title ILIKE :title`)
     }
 
     if (dto.tag) {
-      qb.andWhere(`p.tag ILIKE :tag`)
+      qb.andWhere(`posts.tag ILIKE :tag`)
     }
 
     qb.setParameters({

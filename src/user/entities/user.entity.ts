@@ -1,4 +1,5 @@
-import {Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn} from "typeorm";
+import {Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn} from "typeorm";
+import {CommentEntity} from "../../comment/entities/comment.entity";
 
 @Entity('users')
 export class UserEntity {
@@ -10,6 +11,12 @@ export class UserEntity {
 
   @Column({unique: true})
   email: string;
+
+  @OneToMany(() => CommentEntity, (comment) => comment.user,{
+    eager: false,
+    nullable: true
+  })
+  comments: CommentEntity
 
   @Column({ nullable: true })
   password?: string;
